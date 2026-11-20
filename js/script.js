@@ -452,11 +452,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // so the entrance is not wasted behind the overlay.
     const heroTl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out', duration: 1 } });
     playHeroIntro = () => heroTl.play();
-    heroTl.from('.hero__tag', { opacity: 0, y: 20, delay: 0.1 })
-          .from('.hero__title', { opacity: 0, y: 30 }, '-=0.7')
-          .from('.hero__description', { opacity: 0, y: 20 }, '-=0.7')
-          .from('.hero__actions', { opacity: 0, y: 20 }, '-=0.7')
-          .from('.hero__media-wrapper', { opacity: 0, scale: 0.96 }, '-=0.8');
+    // 1) The hero photo comes in first: fade + a gentle zoom-out of the frame.
+    //    The frame is animated rather than the <img>, because the <img> has a
+    //    CSS transform transition that would fight GSAP.
+    heroTl.from('.hero__media-wrapper', { opacity: 0, duration: 0.9, ease: 'power2.out' })
+          .from('.hero__image-frame', { scale: 1.06, duration: 1.4, ease: 'power3.out' }, '<');
+
+    // 2) Then the copy, in the order it appears on screen. On mobile the
+    //    overline sits below the buttons, so it goes last there.
+    const tagOnTop = !window.matchMedia('(max-width: 900px)').matches;
+    const heroText = tagOnTop
+      ? ['.hero__tag', '.hero__title', '.hero__description', '.hero__actions']
+      : ['.hero__title', '.hero__description', '.hero__actions', '.hero__tag'];
+
+    heroText.forEach((sel, i) => {
+      heroTl.from(sel, { opacity: 0, y: i === 0 ? 30 : 20 }, i === 0 ? '-=0.5' : '-=0.75');
+    });
 
     // Scroll Triggered reveals
     if (typeof ScrollTrigger !== 'undefined') {
